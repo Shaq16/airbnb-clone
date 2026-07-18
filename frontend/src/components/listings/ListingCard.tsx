@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Star, ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,6 +15,7 @@ interface ListingCardProps {
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { currentUser } = useAuth();
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -27,39 +29,58 @@ export default function ListingCard({ listing }: ListingCardProps) {
     return () => clearTimeout(timer);
   }, [listing.id]);
 
-  const toggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const favorites = JSON.parse(localStorage.getItem("airbnb_favorites") || "[]");
-    let updated;
-    if (isFavorite) {
-      updated = favorites.filter((id: number) => id !== listing.id);
-      setIsFavorite(false);
-      localStorage.setItem("airbnb_favorites", JSON.stringify(updated));
-      if (currentUser) {
-        try {
-          await api.wishlists.remove(listing.id);
-        } catch (err) {
-          console.error("Failed to remove from database wishlist:", err);
-          setIsFavorite(true);
-          localStorage.setItem("airbnb_favorites", JSON.stringify([...updated, listing.id]));
-        }
-      }
-    } else {
-      updated = [...favorites, listing.id];
+const toggleFavorite = async (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Redirect guests to login
+  if (!currentUser) {
+    router.push("/login");
+    return;
+  }
+
+  const favorites = JSON.parse(
+    localStorage.getItem("airbnb_favorites") || "[]"
+  ) as number[];
+
+  if (isFavorite) {
+    const updated = favorites.filter((id) => id !== listing.id);
+
+    setIsFavorite(false);
+    localStorage.setItem("airbnb_favorites", JSON.stringify(updated));
+
+    try {
+      await api.wishlists.remove(listing.id);
+    } catch (err) {
+      console.error("Failed to remove from wishlist:", err);
+
+      // Rollback UI
       setIsFavorite(true);
-      localStorage.setItem("airbnb_favorites", JSON.stringify(updated));
-      if (currentUser) {
-        try {
-          await api.wishlists.add(listing.id);
-        } catch (err) {
-          console.error("Failed to add to database wishlist:", err);
-          setIsFavorite(false);
-          localStorage.setItem("airbnb_favorites", JSON.stringify(favorites));
-        }
-      }
+      localStorage.setItem(
+        "airbnb_favorites",
+        JSON.stringify([...updated, listing.id])
+      );
     }
-  };
+  } else {
+    const updated = [...favorites, listing.id];
+
+    setIsFavorite(true);
+    localStorage.setItem("airbnb_favorites", JSON.stringify(updated));
+
+    try {
+      await api.wishlists.add(listing.id);
+    } catch (err) {
+      console.error("Failed to add to wishlist:", err);
+
+      // Rollback UI
+      setIsFavorite(false);
+      localStorage.setItem(
+        "airbnb_favorites",
+        JSON.stringify(favorites)
+      );
+    }
+  }
+};
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
