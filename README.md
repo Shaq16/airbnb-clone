@@ -148,6 +148,6 @@ erDiagram
 
 ## 📌 Implementation Assumptions
 
-1. **Wishlists/Favorites**: Stored locally in `localStorage` under `airbnb_favorites` to provide high-performance, real-time client-side wishlist actions.
+1. **Wishlists/Favorites**: Persisted natively in the SQLite backend database via a dedicated `Wishlist` table, ensuring real-time syncing across devices and robust data persistence.
 2. **Payments**: Real payment processing is out of scope. The reservation checkout displays full billing pricing (nights × rates + service & cleaning fees) and mocks confirmation instantly.
 3. **Map Rendering**: Visual map widgets in the "Trips" layouts are loaded using an embedded, responsive global OpenStreetMap/Google Maps frame.
