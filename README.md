@@ -42,6 +42,14 @@ A fully functional clone of the Airbnb web application. This project replicates 
    ```
    *The backend will run on `http://localhost:8003` with database tables automatically created and seeded on startup.*
 
+### 1.1 Backend Setup (Docker / Production)
+Alternatively, you can run the backend via the provided Dockerfile:
+```bash
+cd backend
+docker build -t airbnb-backend .
+docker run -p 8003:8003 -e PORT=8003 airbnb-backend
+```
+
 ### 2. Frontend Setup
 1. Navigate to the `frontend` directory:
    ```bash
