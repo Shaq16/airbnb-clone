@@ -30,15 +30,11 @@ def create_access_token(user_id: int) -> str:
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     token = request.cookies.get("access_token")
     if not token:
-        # Fallback to default active user (Sophia Chen, ID=1) for dev/testing
-        user = db.query(User).filter(User.id == 1).first()
-        if user:
-            return user
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+        
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user_id_str = payload.get("sub")
