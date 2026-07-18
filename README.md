@@ -40,7 +40,7 @@ A fully functional clone of the Airbnb web application. This project replicates 
    ```bash
    python run.py
    ```
-   *The backend will run on `http://localhost:8002` with database tables automatically created and seeded on startup.*
+   *The backend will run on `http://localhost:8003` with database tables automatically created and seeded on startup.*
 
 ### 2. Frontend Setup
 1. Navigate to the `frontend` directory:
@@ -61,15 +61,17 @@ A fully functional clone of the Airbnb web application. This project replicates 
 
 ## 🗄️ Database Schema Design
 
-The SQLite database consists of four core tables mapped via SQLAlchemy in `backend/app/models.py`:
+The SQLite database consists of five core tables mapped via SQLAlchemy in `backend/app/models.py`:
 
 ```mermaid
 erDiagram
     users ||--o{ listings : "hosts"
     users ||--o{ bookings : "makes"
     users ||--o{ reviews : "writes"
+    users ||--o{ wishlists : "saves"
     listings ||--o{ bookings : "has"
     listings ||--o{ reviews : "receives"
+    listings ||--o{ wishlists : "in"
 
     users {
         int id PK
@@ -112,6 +114,7 @@ erDiagram
         int guest_count
         float total_price
         string status "pending / confirmed / cancelled"
+        string booking_type "stay / experience / service"
     }
 
     reviews {
@@ -121,6 +124,12 @@ erDiagram
         int rating
         text comment
         datetime created_at
+    }
+
+    wishlists {
+        int id PK
+        int user_id FK
+        int listing_id FK
     }
 ```
 
@@ -135,14 +144,15 @@ erDiagram
   - `auth.py`: Simple session cookie-based JWT authentication, email verification, profile switching, and registration.
   - `listings.py`: Offers list filtering (by city/amenities/capacity), listing details, host CRUD, and review submission.
   - `bookings.py`: Handles date availability checking, overlap prevention, price computation, booking cancellation, and host dashboard statistics.
+  - `wishlists.py`: Handles adding and removing listings from user wishlists.
 
 ### 2. Frontend Architecture (Next.js)
 - **App Router Layout (`layout.tsx`)**: Controls global styling and context providers.
 - **Auth Context (`AuthContext.tsx`)**: Manages the logged-in user state, switching profiles, and login token refreshes.
-- **Next.js Proxy Rewrites (`next.config.ts`)**: Configures Next.js to rewrite `/api/:path*` requests directly to `http://localhost:8002/api/:path*`, bypassing CORS.
+- **Next.js Proxy Rewrites (`next.config.ts`)**: Configures Next.js to rewrite `/api/:path*` requests directly to `process.env.BACKEND_API_URL` (defaulting to `http://localhost:8003/api/:path*`), bypassing CORS.
 - **Components (`components/`)**:
   - `navbar/Navbar.tsx`: Custom, collapsing search bar supporting guest popovers, flexible date calendars, and language/currency selectors.
-  - `listings/ListingCard.tsx`: Recreates the signature 5-photo grid and local storage-synchronized heart button for wishlist management.
+  - `listings/ListingCard.tsx`: Recreates the signature 5-photo grid and database-synchronized heart button for wishlist management.
 
 ---
 
