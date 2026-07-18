@@ -9,7 +9,11 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { Listing } from "../../types";
 
-import { getServiceTitle, DEFAULT_SERVICE, SERVICES_DATA } from "../experiences/[id]/page";
+import {
+  getServiceTitle,
+  DEFAULT_SERVICE,
+  SERVICES_DATA,
+} from "@/lib/serviceData";
 
 // MOCK DATA for lookup
 const EXPERIENCES_DATA: Record<number, any> = {
