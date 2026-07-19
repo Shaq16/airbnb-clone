@@ -40,7 +40,11 @@ A fully functional clone of the Airbnb web application. This project replicates 
    ```bash
    python run.py
    ```
-   *The backend will run on `http://localhost:8003` with database tables automatically created and seeded on startup.*
+   *The backend will run on `http://localhost:8003` with database tables automatically created and core seed data populated on startup.*
+5. Run the Experiences seeder to populate dynamic experience records:
+   ```bash
+   python seed_experiences.py
+   ```
 
 ### 1.1 Backend Setup (Docker / Production)
 Alternatively, you can run the backend via the provided Dockerfile:
@@ -67,6 +71,33 @@ docker run -p 8003:8003 -e PORT=8003 airbnb-backend
 
 ---
 
+## 🔒 Authentication Architecture
+
+Authentication in this application relies on stateful JSON Web Tokens (JWT) secured via HTTP-only cookies to prevent XSS attacks while maintaining a seamless user experience.
+
+```mermaid
+sequenceDiagram
+    participant Client as Frontend (Next.js)
+    participant API as Auth API (FastAPI)
+    participant DB as SQLite DB
+
+    Client->>API: POST /api/auth/login (email, password)
+    API->>DB: Query User by Email
+    DB-->>API: User Record (password_hash)
+    API->>API: Validate Password Hash
+    API->>API: Generate JWT (expires in 7 days)
+    API-->>Client: 200 OK + Set-Cookie: access_token (HttpOnly)
+
+    Note over Client,API: Authenticated Requests
+    Client->>API: GET /api/listings (includes Cookie)
+    API->>API: Decode JWT & Extract User ID
+    API->>DB: Fetch Current User
+    DB-->>API: User Context
+    API-->>Client: 200 OK + Protected Data
+```
+
+---
+
 ## 🗄️ Database Schema Design
 
 The SQLite database consists of five core tables mapped via SQLAlchemy in `backend/app/models.py`:
@@ -80,6 +111,26 @@ erDiagram
     listings ||--o{ bookings : "has"
     listings ||--o{ reviews : "receives"
     listings ||--o{ wishlists : "in"
+    users ||--o{ experiences : "hosts"
+
+    experiences {
+        int id PK
+        string title
+        text description
+        string category
+        string location_name
+        string address
+        string duration
+        string languages
+        float price
+        string host_name
+        string host_title
+        text host_bio
+        string host_avatar
+        string photos "JSON array"
+        string what_you_do "JSON array"
+        string reviews "JSON array"
+    }
 
     users {
         int id PK
@@ -153,6 +204,7 @@ erDiagram
   - `listings.py`: Offers list filtering (by city/amenities/capacity), listing details, host CRUD, and review submission.
   - `bookings.py`: Handles date availability checking, overlap prevention, price computation, booking cancellation, and host dashboard statistics.
   - `wishlists.py`: Handles adding and removing listings from user wishlists.
+  - `experiences.py`: Fetches specific, dynamic experience details from the SQLite database.
 
 ### 2. Frontend Architecture (Next.js)
 - **App Router Layout (`layout.tsx`)**: Controls global styling and context providers.
