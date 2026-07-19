@@ -46,7 +46,7 @@ const BANGALORE_TODAY_EXPERIENCES = [
     priceText: "From ₹2,000 / guest",
     rating: "5.0",
     timeText: "11 am",
-    image: "https://images.unsplash.com/photo-1565192647048-f997ee879ab8?auto=format&fit=crop&w=600&q=80"
+    image: "/images/pottery_workshop.jpg"
   },
   {
     id: 4,
@@ -54,7 +54,7 @@ const BANGALORE_TODAY_EXPERIENCES = [
     priceText: "From ₹3,333 / guest",
     rating: "4.98",
     timeText: "7 pm",
-    image: "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&w=600&q=80"
+    image: "/images/street_food_tour.jpg"
   },
   {
     id: 5,
@@ -199,7 +199,7 @@ const SOUTH_GOA_SERVICES = [
     title: "Beach Couple Shoot by Sunny",
     priceText: "From ₹5,500 / group",
     rating: "4.98",
-    image: "https://images.unsplash.com/photo-1519225495810-7517c24a20b8?auto=format&fit=crop&w=600&q=80"
+    image: "/images/beach_couple_shoot.jpg"
   },
   {
     id: 32,
