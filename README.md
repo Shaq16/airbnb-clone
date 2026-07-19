@@ -5,6 +5,16 @@ A fully functional clone of the Airbnb web application. This project replicates 
 
 ---
 
+## 🌐 Live Demo
+
+- **Frontend Application**: [https://airbnb-frontend-an91.onrender.com/](https://airbnb-frontend-an91.onrender.com/)
+- **Backend API**: [https://airbnb-backend-9lsk.onrender.com/](https://airbnb-backend-9lsk.onrender.com/)
+
+> [!WARNING]
+> **Hosting Notice:** This application is hosted on Render's free tier. Free instances spin down with inactivity, which can delay initial requests by **50 seconds or more** while the servers wake up. Please be patient on your first visit!
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15+ (TypeScript, React, Tailwind CSS, Lucide Icons)
