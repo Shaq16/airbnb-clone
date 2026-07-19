@@ -20,14 +20,18 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
 
   // Load wishlist from localStorage on mount
-  useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem("airbnb_favorites") || "[]");
-    const fav = favorites.includes(listing.id);
-    const timer = setTimeout(() => {
-      setIsFavorite(fav);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [listing.id]);
+useEffect(() => {
+  if (!currentUser) {
+    setIsFavorite(false);
+    return;
+  }
+
+  const favorites = JSON.parse(
+    localStorage.getItem("airbnb_favorites") || "[]"
+  ) as number[];
+
+  setIsFavorite(favorites.includes(listing.id));
+}, [listing.id, currentUser]);
 
 const toggleFavorite = async (e: React.MouseEvent) => {
   e.preventDefault();
