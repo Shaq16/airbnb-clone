@@ -202,6 +202,43 @@ erDiagram
     }
 ```
 
+## 📡 API Endpoints
+
+A comprehensive suite of RESTful API endpoints drives the application logic. All responses are returned as JSON, and protected routes require a valid JWT cookie.
+
+### Authentication (`/api/auth`)
+- `GET /api/auth/me`: Get current logged-in user profile
+- `GET /api/auth/users`: List all mock users for profile switching
+- `POST /api/auth/switch/{user_id}`: Switch active mock user profile
+- `POST /api/auth/check-email`: Check if an email is registered
+- `POST /api/auth/login`: Standard email/password login
+- `POST /api/auth/send-otp`: Generate and mock-send an OTP
+- `POST /api/auth/verify-otp`: Verify OTP and login
+- `POST /api/auth/register`: Create a new user account
+- `POST /api/auth/logout`: Clear JWT session cookie
+
+### Listings (`/api/listings`)
+- `GET /api/listings`: Fetch all listings (supports filtering by location, price, guests)
+- `GET /api/listings/{listing_id}`: Fetch detailed information for a specific listing
+- `POST /api/listings`: Create a new listing (Host feature)
+- `PUT /api/listings/{listing_id}`: Update an existing listing
+- `DELETE /api/listings/{listing_id}`: Delete a listing
+- `POST /api/listings/{listing_id}/reviews`: Submit a review and rating for a listing
+
+### Bookings (`/api/bookings`)
+- `POST /api/bookings`: Create a new booking/reservation
+- `GET /api/bookings/my-trips`: Retrieve all bookings made by the current user
+- `GET /api/bookings/dashboard`: Retrieve all bookings for listings owned by the host
+- `DELETE /api/bookings/{booking_id}`: Cancel a booking
+
+### Experiences (`/api/experiences`)
+- `GET /api/experiences/{experience_id}`: Fetch dynamic experience details and sub-packages
+
+### Wishlists (`/api/wishlists`)
+- `GET /api/wishlists`: Retrieve all saved listings for the current user
+- `POST /api/wishlists/{listing_id}`: Add a listing to the wishlist
+- `DELETE /api/wishlists/{listing_id}`: Remove a listing from the wishlist
+
 ---
 
 ## 🏛️ Architecture Overview
