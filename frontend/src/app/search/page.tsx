@@ -207,8 +207,9 @@ function FilterBar({ labels }: { labels: string[] }) {
 
 function HomeCard({ listing }: { listing: typeof MOCK_HOMES[0] }) {
   const [liked, setLiked] = useState(false);
+  const router = useRouter();
   return (
-    <div className="group cursor-pointer">
+    <div className="group cursor-pointer" onClick={() => router.push(`/listings/${listing.id}`)}>
       <div className="relative rounded-2xl overflow-hidden aspect-video mb-3 bg-gray-100">
         <img src={listing.img} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         {listing.tag && (
@@ -408,8 +409,13 @@ function HomesResults({ location, guests }: { location: string; guests: string }
 
 function ExperienceCard({ item }: { item: typeof EXP_CATEGORIES[0]["items"][0] }) {
   const [liked, setLiked] = useState(false);
+  const router = useRouter();
+  
+  // item.id is like "e1", "e2". We just use the numeric part if needed, or route to /experiences/1 fallback
+  const expId = item.id.replace(/\D/g, "") || "1";
+
   return (
-    <div className="group cursor-pointer flex-shrink-0 w-[210px]">
+    <div className="group cursor-pointer flex-shrink-0 w-[210px]" onClick={() => router.push(`/experiences/${expId}`)}>
       <div className="relative rounded-2xl overflow-hidden mb-3 bg-gray-100" style={{ height: "280px" }}>
         <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         {item.tag && (
