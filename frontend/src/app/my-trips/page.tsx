@@ -275,7 +275,7 @@ export default function MyTripsPage() {
                           <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{booking.category}</p>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2.5">
                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                            <span>Date: {booking.check_in}</span>
+                            <span>Date: {booking.check_in} {booking.package_title ? `(${booking.package_title})` : ""}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
                             <User className="w-3.5 h-3.5 text-gray-400" />

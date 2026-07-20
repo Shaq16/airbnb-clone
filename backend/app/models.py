@@ -96,3 +96,23 @@ class Wishlist(Base):
     user = relationship("User", back_populates="wishlists")
     listing = relationship("Listing", back_populates="wishlists")
 
+
+class Experience(Base):
+    __tablename__ = "experiences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    category = Column(String, nullable=False)
+    location_name = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    duration = Column(String, nullable=False)
+    languages = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    host_name = Column(String, nullable=False)
+    host_title = Column(String, nullable=False)
+    host_bio = Column(Text, nullable=False)
+    host_avatar = Column(String, nullable=False)
+    photos = Column(String, default="[]")  # JSON string
+    what_you_do = Column(String, default="[]")  # JSON string
+    reviews = Column(String, default="[]")  # JSON string

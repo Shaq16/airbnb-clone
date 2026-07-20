@@ -3,7 +3,7 @@ import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import auth, listings, bookings, wishlists
+from .routers import auth, listings, bookings, wishlists, experiences
 from .seed import seed_db
 from starlette.requests import Request
 from starlette.responses import Response
@@ -14,14 +14,15 @@ Base.metadata.create_all(bind=engine)
 # Seed the database once on startup if the expected assignment fixtures are missing.
 try:
     from .database import SessionLocal
-    from .models import User, Listing, Booking
+    from .models import User, Listing, Booking, Experience
+    from seed_experiences import seed_experiences
 
     db = SessionLocal()
     try:
         expected_check_in = datetime.date.today() + datetime.timedelta(days=2)
         expected_check_out = datetime.date.today() + datetime.timedelta(days=7)
         has_users = db.query(User).first() is not None
-        has_malibu_listing = db.query(Listing).filter(Listing.location.ilike("%Malibu%")) .first() is not None
+        has_malibu_listing = db.query(Listing).filter(Listing.location.ilike("%Malibu%")).first() is not None
         has_seeded_booking = db.query(Booking).filter(
             Booking.listing_id == 1,
             Booking.check_in == expected_check_in,
@@ -30,6 +31,10 @@ try:
         ).first() is not None
         if not has_users or not has_malibu_listing or not has_seeded_booking:
             seed_db()
+        
+        has_experiences = db.query(Experience).first() is not None
+        if not has_experiences:
+            seed_experiences()
     finally:
         db.close()
 except Exception:
@@ -57,6 +62,7 @@ app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(bookings.router)
 app.include_router(wishlists.router)
+app.include_router(experiences.router)
 
 @app.get("/")
 def read_root():

@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Star, ChevronLeft, ChevronRight } from "lucide-react";
@@ -16,8 +16,19 @@ interface ListingCardProps {
 export default function ListingCard({ listing }: ListingCardProps) {
   const { currentUser } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const checkInParam = searchParams.get("check_in");
+  const checkOutParam = searchParams.get("check_out");
+  const guestsParam = searchParams.get("guests");
+
+  const queryParams = new URLSearchParams();
+  if (checkInParam) queryParams.append("check_in", checkInParam);
+  if (checkOutParam) queryParams.append("check_out", checkOutParam);
+  if (guestsParam) queryParams.append("guests", guestsParam);
+  const hrefString = `/listings/${listing.id}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
 
   // Load wishlist from localStorage on mount
 useEffect(() => {
@@ -107,7 +118,7 @@ const toggleFavorite = async (e: React.MouseEvent) => {
       
       {/* Photo Carousel Container */}
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100 shadow-xs">
-        <Link href={`/listings/${listing.id}`}>
+        <Link href={hrefString}>
           <img
             src={listing.photos[currentImageIndex] || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800"}
             alt={listing.title}
@@ -170,7 +181,7 @@ const toggleFavorite = async (e: React.MouseEvent) => {
       </div>
 
       {/* Listing Meta Info (Goa style match) */}
-      <Link href={`/listings/${listing.id}`} className="flex flex-col gap-0.5 text-[14px]">
+      <Link href={hrefString} className="flex flex-col gap-0.5 text-[14px]">
         <span className="font-semibold text-gray-800">
           {listing.property_type} in {listing.location.split(',')[0]}
         </span>

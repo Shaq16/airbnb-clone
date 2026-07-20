@@ -37,16 +37,18 @@ function BookContent() {
   const idVal = Number(searchParams.get("id"));
   const checkIn = searchParams.get("checkIn") || "2026-07-24";
   const checkOut = searchParams.get("checkOut") || "2026-07-26";
+  const timeSlot = searchParams.get("timeSlot") || "";
   const packageIndex = Number(searchParams.get("packageIndex") || "0");
 
   const [listing, setListing] = useState<Listing | null>(null);
-  const [loading, setLoading] = useState(type === "stay");
+  const [fetchedExperience, setFetchedExperience] = useState<any>(null);
+  const [loading, setLoading] = useState(type === "stay" || type === "experience");
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [guestCount, setGuestCount] = useState(Number(searchParams.get("guests") || "1"));
   const [showGuestPicker, setShowGuestPicker] = useState(false);
 
-  // Fetch listing details if booking a stay
+  // Fetch listing details if booking a stay or experience
   useEffect(() => {
     if (type === "stay" && idVal) {
       setLoading(true);
@@ -58,6 +60,41 @@ function BookContent() {
         .catch((err) => {
           console.error(err);
           setBookingError("Failed to load property details.");
+          setLoading(false);
+        });
+    } else if (type === "experience" && idVal) {
+      setLoading(true);
+      fetch(`/api/experiences/${idVal}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Experience not found");
+          return res.json();
+        })
+        .then((data) => {
+          let photos = [];
+          try {
+            photos = typeof data.photos === "string" ? JSON.parse(data.photos) : (data.photos || []);
+          } catch {
+            photos = data.photos || [];
+          }
+          let reviews = [];
+          try {
+            reviews = typeof data.reviews === "string" ? JSON.parse(data.reviews) : (data.reviews || []);
+          } catch {
+            reviews = data.reviews || [];
+          }
+          setFetchedExperience({
+            id: data.id,
+            title: data.title,
+            category: data.category,
+            price: data.price,
+            rating: 5.0,
+            reviewsCount: reviews.length || 12,
+            image: photos[0] || "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=400&q=80"
+          });
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
           setLoading(false);
         });
     }
@@ -79,7 +116,7 @@ function BookContent() {
   const totalStay = rawBase + taxes;
 
   // Resolve experience or service details
-  const experienceItem = EXPERIENCES_DATA[idVal] || {
+  const experienceItem = fetchedExperience || EXPERIENCES_DATA[idVal] || {
     id: idVal,
     title: "Experience the Offbeat City with a Local",
     category: "Culture tours",
@@ -124,7 +161,7 @@ function BookContent() {
           check_in: checkIn,
           guest_count: guestCount,
           image: type === "experience" ? experienceItem.image : (serviceItem.mainImage || "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=400&q=80"),
-          package_title: type === "service" ? selectedPackage.title : undefined
+          package_title: type === "experience" ? (timeSlot || undefined) : selectedPackage.title
         });
       }
 
@@ -265,11 +302,22 @@ function BookContent() {
 
             {/* Inputs displays */}
             <div className="space-y-4 pt-3 border-t border-gray-150">
-              {type === "stay" && (
+              {type === "stay" ? (
                 <div className="flex justify-between items-center text-xs font-bold text-gray-800">
                   <div>
                     <span className="block text-gray-400 text-[10px] uppercase font-bold">Dates</span>
                     <span>{formatDateRange(checkIn, checkOut)}</span>
+                  </div>
+                  <button onClick={() => router.back()} className="px-3 py-1.5 border border-gray-250 rounded-lg text-[10px] hover:border-black transition cursor-pointer">
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center text-xs font-bold text-gray-800">
+                  <div>
+                    <span className="block text-gray-400 text-[10px] uppercase font-bold">Date & Time Slot</span>
+                    <span>{checkIn}</span>
+                    {timeSlot && <span className="block text-[11px] text-gray-500 font-medium">{timeSlot}</span>}
                   </div>
                   <button onClick={() => router.back()} className="px-3 py-1.5 border border-gray-250 rounded-lg text-[10px] hover:border-black transition cursor-pointer">
                     Change

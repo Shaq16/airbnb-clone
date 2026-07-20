@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { Listing, Review } from "../../../types";
@@ -34,6 +34,7 @@ export default function ListingDetailPage() {
   const { currentUser } = useAuth();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const listingId = Number(params.id);
 
   const [listing, setListing] = useState<Listing | null>(null);
@@ -55,6 +56,26 @@ export default function ListingDetailPage() {
 
   // Wishlist state
   const [isFavorite, setIsFavorite] = useState(false);
+
+  // Sync dates with URL search params or localStorage fallbacks
+  useEffect(() => {
+    const urlCheckIn = searchParams.get("check_in") || searchParams.get("checkIn");
+    const urlCheckOut = searchParams.get("check_out") || searchParams.get("checkOut");
+    const urlGuests = searchParams.get("guests");
+
+    const savedCheckIn = localStorage.getItem("search_check_in") || "";
+    const savedCheckOut = localStorage.getItem("search_check_out") || "";
+    const savedGuests = Number(localStorage.getItem("search_guests")) || 1;
+
+    if (urlCheckIn) setCheckIn(urlCheckIn);
+    else if (savedCheckIn) setCheckIn(savedCheckIn);
+
+    if (urlCheckOut) setCheckOut(urlCheckOut);
+    else if (savedCheckOut) setCheckOut(savedCheckOut);
+
+    if (urlGuests) setGuestCount(Number(urlGuests));
+    else if (savedGuests) setGuestCount(savedGuests);
+  }, [searchParams]);
 
   const fetchListingDetails = async () => {
     try {
@@ -146,6 +167,10 @@ export default function ListingDetailPage() {
 
   const handleCalendarDayClick = (day: number, isAugust: boolean) => {
     const clickedDate = new Date(2026, isAugust ? 7 : 6, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (clickedDate < today) return; // Prevent selection of past dates
+
     const clickedStr = clickedDate.toISOString().split("T")[0];
     if (!checkIn || (checkIn && checkOut)) {
       setCheckIn(clickedStr);
@@ -525,10 +550,10 @@ export default function ListingDetailPage() {
                   <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                   {/* Empty cells July */}
                   <span className="py-2"></span><span className="py-2"></span><span className="py-2"></span>
-                  <span className="py-2 text-gray-800">1</span>
-                  <span className="py-2 text-gray-800">2</span>
-                  <span className="py-2 text-gray-800">3</span>
-                  <span className="py-2 text-gray-800">4</span>
+                  <span className={`py-2 select-none ${new Date(2026, 6, 1) < new Date(new Date().setHours(0,0,0,0)) ? "text-gray-300 cursor-not-allowed pointer-events-none" : "text-gray-800"}`}>1</span>
+                  <span className={`py-2 select-none ${new Date(2026, 6, 2) < new Date(new Date().setHours(0,0,0,0)) ? "text-gray-300 cursor-not-allowed pointer-events-none" : "text-gray-800"}`}>2</span>
+                  <span className={`py-2 select-none ${new Date(2026, 6, 3) < new Date(new Date().setHours(0,0,0,0)) ? "text-gray-300 cursor-not-allowed pointer-events-none" : "text-gray-800"}`}>3</span>
+                  <span className={`py-2 select-none ${new Date(2026, 6, 4) < new Date(new Date().setHours(0,0,0,0)) ? "text-gray-300 cursor-not-allowed pointer-events-none" : "text-gray-800"}`}>4</span>
                   
                   {[...Array(31)].map((_, i) => {
                     const day = i + 5;
@@ -536,18 +561,25 @@ export default function ListingDetailPage() {
                     const isStart = isDateStart(day, false);
                     const isEnd = isDateEnd(day, false);
 
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const current = new Date(2026, 6, day);
+                    const isBeforeToday = current < today;
+
                     return (
                       <span 
                         key={day} 
-                        onClick={() => handleCalendarDayClick(day, false)}
-                        className={`py-2 text-xs cursor-pointer select-none relative ${
-                          isSelected 
-                            ? isStart 
-                              ? "bg-black text-white rounded-full font-bold z-10" 
-                              : isEnd 
+                        onClick={() => !isBeforeToday && handleCalendarDayClick(day, false)}
+                        className={`py-2 text-xs select-none relative ${
+                          isBeforeToday
+                            ? "text-gray-300 cursor-not-allowed pointer-events-none"
+                            : isSelected 
+                              ? isStart 
                                 ? "bg-black text-white rounded-full font-bold z-10" 
-                                : "bg-gray-100 text-gray-850 font-bold" 
-                            : "text-gray-800 hover:bg-gray-100 rounded-full"
+                                : isEnd 
+                                  ? "bg-black text-white rounded-full font-bold z-10" 
+                                  : "bg-gray-100 text-gray-850 font-bold" 
+                              : "text-gray-800 hover:bg-gray-100 rounded-full cursor-pointer"
                         }`}
                       >
                         {day}
@@ -564,7 +596,7 @@ export default function ListingDetailPage() {
                   <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                   {/* Empty cells Aug */}
                   <span className="py-2"></span><span className="py-2"></span><span className="py-2"></span><span className="py-2"></span><span className="py-2"></span><span className="py-2"></span>
-                  <span className="py-2 text-gray-800">1</span>
+                  <span className={`py-2 select-none ${new Date(2026, 7, 1) < new Date(new Date().setHours(0,0,0,0)) ? "text-gray-300 cursor-not-allowed pointer-events-none" : "text-gray-800"}`}>1</span>
 
                   {[...Array(31)].map((_, i) => {
                     const day = i + 2;
@@ -572,18 +604,25 @@ export default function ListingDetailPage() {
                     const isStart = isDateStart(day, true);
                     const isEnd = isDateEnd(day, true);
 
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const current = new Date(2026, 7, day);
+                    const isBeforeToday = current < today;
+
                     return (
                       <span 
                         key={day} 
-                        onClick={() => handleCalendarDayClick(day, true)}
-                        className={`py-2 text-xs cursor-pointer select-none relative ${
-                          isSelected 
-                            ? isStart 
-                              ? "bg-black text-white rounded-full font-bold z-10" 
-                              : isEnd 
+                        onClick={() => !isBeforeToday && handleCalendarDayClick(day, true)}
+                        className={`py-2 text-xs select-none relative ${
+                          isBeforeToday
+                            ? "text-gray-300 cursor-not-allowed pointer-events-none"
+                            : isSelected 
+                              ? isStart 
                                 ? "bg-black text-white rounded-full font-bold z-10" 
-                                : "bg-gray-100 text-gray-850 font-bold" 
-                            : "text-gray-800 hover:bg-gray-100 rounded-full"
+                                : isEnd 
+                                  ? "bg-black text-white rounded-full font-bold z-10" 
+                                  : "bg-gray-100 text-gray-850 font-bold" 
+                              : "text-gray-800 hover:bg-gray-100 rounded-full cursor-pointer"
                         }`}
                       >
                         {day}

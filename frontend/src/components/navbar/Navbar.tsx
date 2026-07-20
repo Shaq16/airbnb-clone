@@ -321,8 +321,14 @@ export default function Navbar() {
             const isEnd = endDate && formatDate(endDate) === formatted;
             const isWithinRange = startDate && endDate && day > startDate && day < endDate;
 
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isBeforeToday = day < today;
+
             let bgClass = "hover:bg-gray-100 text-gray-800 hover:rounded-full";
-            if (isStart || isEnd) {
+            if (isBeforeToday) {
+              bgClass = "text-gray-300 cursor-not-allowed hover:bg-transparent pointer-events-none";
+            } else if (isStart || isEnd) {
               bgClass = "bg-[#FF385C] text-white font-bold rounded-full scale-90 shadow-xs";
             } else if (isWithinRange) {
               bgClass = "bg-[#FF385C]/10 text-gray-800 rounded-none scale-100";
@@ -332,8 +338,9 @@ export default function Navbar() {
               <button
                 key={formatted}
                 type="button"
+                disabled={isBeforeToday}
                 onClick={() => handleDayClick(day)}
-                className={`h-9 w-9 text-xs rounded-full flex items-center justify-center transition cursor-pointer select-none ${bgClass}`}
+                className={`h-9 w-9 text-xs rounded-full flex items-center justify-center transition select-none ${isBeforeToday ? '' : 'cursor-pointer'} ${bgClass}`}
               >
                 {day.getDate()}
               </button>
@@ -393,8 +400,17 @@ export default function Navbar() {
       }
     }
 
-    if (finalCheckIn) query.append("check_in", finalCheckIn);
-    if (finalCheckOut) query.append("check_out", finalCheckOut);
+    if (finalCheckIn) {
+      query.append("check_in", finalCheckIn);
+      localStorage.setItem("search_check_in", finalCheckIn);
+    }
+    if (finalCheckOut) {
+      query.append("check_out", finalCheckOut);
+      localStorage.setItem("search_check_out", finalCheckOut);
+    }
+    if (totalGuests > 0) {
+      localStorage.setItem("search_guests", String(totalGuests));
+    }
     router.push(`/search?${query.toString()}`);
   };
 

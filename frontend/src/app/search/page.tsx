@@ -208,8 +208,23 @@ function FilterBar({ labels }: { labels: string[] }) {
 function HomeCard({ listing }: { listing: typeof MOCK_HOMES[0] }) {
   const [liked, setLiked] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleCardClick = () => {
+    const checkInParam = searchParams.get("check_in");
+    const checkOutParam = searchParams.get("check_out");
+    const guestsParam = searchParams.get("guests");
+
+    const queryParams = new URLSearchParams();
+    if (checkInParam) queryParams.append("check_in", checkInParam);
+    if (checkOutParam) queryParams.append("check_out", checkOutParam);
+    if (guestsParam) queryParams.append("guests", guestsParam);
+    
+    router.push(`/listings/${listing.id}${queryParams.toString() ? '?' + queryParams.toString() : ''}`);
+  };
+
   return (
-    <div className="group cursor-pointer" onClick={() => router.push(`/listings/${listing.id}`)}>
+    <div className="group cursor-pointer" onClick={handleCardClick}>
       <div className="relative rounded-2xl overflow-hidden aspect-video mb-3 bg-gray-100">
         <img src={listing.img} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         {listing.tag && (

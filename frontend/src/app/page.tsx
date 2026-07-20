@@ -327,6 +327,41 @@ function HomeContent() {
   const [loadingNextPage, setLoadingNextPage] = useState(false);
   const observerRef = React.useRef<HTMLDivElement>(null);
   const [showFeesToast, setShowFeesToast] = useState(false);
+  const [experiences, setExperiences] = useState<CustomCard[]>([]);
+  const [loadingExperiences, setLoadingExperiences] = useState(true);
+
+  // Fetch experiences from backend on mount
+  useEffect(() => {
+    fetch("/api/experiences")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch experiences");
+        return res.json();
+      })
+      .then(data => {
+        const cards = data.map((exp: any) => {
+          let photos = [];
+          try {
+            photos = typeof exp.photos === "string" ? JSON.parse(exp.photos) : (exp.photos || []);
+          } catch {
+            photos = exp.photos || [];
+          }
+          return {
+            id: exp.id,
+            title: exp.title,
+            priceText: `From ₹${exp.price.toLocaleString("en-IN")} / guest`,
+            rating: "5.0",
+            timeText: exp.duration,
+            image: photos[0] || "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=600&q=80"
+          };
+        });
+        setExperiences(cards);
+        setLoadingExperiences(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoadingExperiences(false);
+      });
+  }, []);
 
 
   const fetchListings = async () => {
@@ -495,18 +530,30 @@ function HomeContent() {
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 select-none font-semibold">
             <span>Experiences</span>
             <span>·</span>
-            <span>Bengaluru</span>
+            <span>Popular in India</span>
           </div>
 
-          <CustomCarouselRow 
-            title="Happening today in Bengaluru" 
-            items={BANGALORE_TODAY_EXPERIENCES} 
-          />
+          {loadingExperiences ? (
+            <div className="p-8 text-center text-gray-500 font-bold mt-10 animate-pulse">
+              Loading dynamic experiences from database...
+            </div>
+          ) : experiences.length === 0 ? (
+            <div className="p-8 text-center text-red-500 font-bold mt-10">
+              No experiences found in database. Make sure backend is running and seeded.
+            </div>
+          ) : (
+            <>
+              <CustomCarouselRow 
+                title="Top Experiences in India" 
+                items={experiences.slice(0, 10)} 
+              />
 
-          <CustomCarouselRow 
-            title="Tomorrow in Bengaluru" 
-            items={BANGALORE_TOMORROW_EXPERIENCES} 
-          />
+              <CustomCarouselRow 
+                title="Popular Heritage & Local Adventures" 
+                items={experiences.slice(10, 20)} 
+              />
+            </>
+          )}
         </div>
       </div>
     );

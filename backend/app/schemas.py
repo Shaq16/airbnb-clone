@@ -164,3 +164,34 @@ class WishlistResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- EXPERIENCE SCHEMAS ---
+class ExperienceResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    category: str
+    location_name: str
+    address: str
+    duration: str
+    languages: str
+    price: float
+    host_name: str
+    host_title: str
+    host_bio: str
+    host_avatar: str
+    photos: List[str]
+    what_you_do: List[dict]
+    reviews: List[dict]
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('photos', 'what_you_do', 'reviews', mode='before')
+    @classmethod
+    def parse_json_string(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v
