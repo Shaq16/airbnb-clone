@@ -311,7 +311,7 @@ export default function ExperienceDetailPage() {
   };
 
   // --- RENDER SERVICE LAYOUT (Image 1, 2, 3) ---
-  if (isService) {
+  if (isService && service) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-sans pb-24 select-none">
         
