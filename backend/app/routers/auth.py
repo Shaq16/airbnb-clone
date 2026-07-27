@@ -1,19 +1,18 @@
 import hashlib
 import random
-import jwt
-from datetime import datetime, timedelta, timezone
+import uuid
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..database import get_db
-from ..models import User
+from ..models import User, UserSession
 from ..schemas import UserResponse
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-JWT_SECRET = "super_secret_airbnb_jwt_key_123"
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_DAYS = 7
+SESSION_COOKIE_NAME = "access_token"
+SESSION_EXPIRATION_DAYS = 7
 
 
 def _hash_password(password: str) -> str:
@@ -21,34 +20,52 @@ def _hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
-def create_access_token(user_id: int) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRATION_DAYS)
-    payload = {"sub": str(user_id), "exp": expire}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+def create_session(user_id: int, response: Response, db: Session) -> str:
+    session_id = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(days=SESSION_EXPIRATION_DAYS)
+    
+    db_session = UserSession(
+        session_id=session_id,
+        user_id=user_id,
+        expires_at=expires_at
+    )
+    db.add(db_session)
+    db.commit()
+    
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_id,
+        httponly=True,
+        samesite="lax",
+        max_age=SESSION_EXPIRATION_DAYS * 24 * 3600
+    )
+    return session_id
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    token = request.cookies.get("access_token")
-    if not token:
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
         
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id_str = payload.get("sub")
-        if user_id_str is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        user_id = int(user_id_str)
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Invalid user ID in token")
-
-    user = db.query(User).filter(User.id == user_id).first()
+    db_session = db.query(UserSession).filter(UserSession.session_id == session_id).first()
+    if not db_session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid session"
+        )
+        
+    if db_session.expires_at < datetime.utcnow():
+        db.delete(db_session)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired"
+        )
+        
+    user = db.query(User).filter(User.id == db_session.user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -77,14 +94,7 @@ def switch_active_user(user_id: int, response: Response, db: Session = Depends(g
             detail=f"User with ID {user_id} not found."
         )
     
-    token = create_access_token(user.id)
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=JWT_EXPIRATION_DAYS * 24 * 3600
-    )
+    create_session(user.id, response, db)
     return user
 
 
@@ -128,14 +138,7 @@ def login_user(req: LoginRequest, response: Response, db: Session = Depends(get_
             detail="Incorrect password."
         )
     
-    token = create_access_token(user.id)
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=JWT_EXPIRATION_DAYS * 24 * 3600
-    )
+    create_session(user.id, response, db)
     return user
 
 
@@ -191,14 +194,7 @@ def verify_otp(req: VerifyOtpRequest, response: Response, db: Session = Depends(
     user.otp_code = None
     db.commit()
     
-    token = create_access_token(user.id)
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=JWT_EXPIRATION_DAYS * 24 * 3600
-    )
+    create_session(user.id, response, db)
     return user
 
 
@@ -230,20 +226,17 @@ def register_user(req: RegisterRequest, response: Response, db: Session = Depend
     db.commit()
     db.refresh(new_user)
     
-    token = create_access_token(new_user.id)
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=JWT_EXPIRATION_DAYS * 24 * 3600
-    )
+    create_session(new_user.id, response, db)
     return new_user
 
 
 # ---------- LOGOUT ----------
 
 @router.post("/logout")
-def logout_user(response: Response):
-    response.delete_cookie(key="access_token")
+def logout_user(request: Request, response: Response, db: Session = Depends(get_db)):
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    if session_id:
+        db.query(UserSession).filter(UserSession.session_id == session_id).delete()
+        db.commit()
+    response.delete_cookie(key=SESSION_COOKIE_NAME)
     return {"status": "success"}

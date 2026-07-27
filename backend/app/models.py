@@ -116,3 +116,14 @@ class Experience(Base):
     photos = Column(String, default="[]")  # JSON string
     what_you_do = Column(String, default="[]")  # JSON string
     reviews = Column(String, default="[]")  # JSON string
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    session_id = Column(String, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User")
