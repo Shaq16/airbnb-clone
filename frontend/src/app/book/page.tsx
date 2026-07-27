@@ -112,8 +112,9 @@ function BookContent() {
   // Calculations for Stays
   const pricePerNight = listing ? listing.price_per_night : 4336;
   const rawBase = pricePerNight * diffDays;
-  const taxes = Math.round(rawBase * 0.05);
-  const totalStay = rawBase + taxes;
+  const cleaningFee = listing ? listing.cleaning_fee : 0;
+  const serviceFee = listing ? listing.service_fee : 0;
+  const totalStay = rawBase + cleaningFee + serviceFee;
 
   // Resolve experience or service details
   const experienceItem = fetchedExperience || EXPERIENCES_DATA[idVal] || {
@@ -203,17 +204,20 @@ function BookContent() {
   const priceDetails = type === "stay" ? {
     sub: `${diffDays} night${diffDays > 1 ? "s" : ""} x ₹${pricePerNight.toLocaleString("en-IN")}`,
     subCost: rawBase,
-    tax: taxes,
+    cleaningFee: cleaningFee,
+    serviceFee: serviceFee,
     total: totalStay
   } : type === "experience" ? {
     sub: `${guestCount} guest${guestCount > 1 ? "s" : ""} x ₹${experienceItem.price.toLocaleString("en-IN")}`,
     subCost: experienceItem.price * guestCount,
-    tax: 0,
+    cleaningFee: 0,
+    serviceFee: 0,
     total: experienceItem.price * guestCount
   } : {
     sub: selectedPackage.title,
     subCost: selectedPackage.price,
-    tax: 0,
+    cleaningFee: 0,
+    serviceFee: 0,
     total: selectedPackage.price
   };
 
@@ -374,10 +378,17 @@ function BookContent() {
                 <span className="text-gray-900 font-bold">₹{priceDetails.subCost.toLocaleString("en-IN")}</span>
               </div>
 
-              {priceDetails.tax > 0 && (
+              {type === "stay" && priceDetails.cleaningFee > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="underline">Taxes</span>
-                  <span className="text-gray-900 font-bold">₹{priceDetails.tax.toLocaleString("en-IN")}</span>
+                  <span className="underline">Cleaning fee</span>
+                  <span className="text-gray-900 font-bold">₹{priceDetails.cleaningFee.toLocaleString("en-IN")}</span>
+                </div>
+              )}
+
+              {type === "stay" && priceDetails.serviceFee > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="underline">Airbnb service fee</span>
+                  <span className="text-gray-900 font-bold">₹{priceDetails.serviceFee.toLocaleString("en-IN")}</span>
                 </div>
               )}
 
